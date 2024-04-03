@@ -1,20 +1,44 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { View, TextInput, StyleSheet, Pressable, Text, SafeAreaView } from "react-native";
+import { auth } from "./firebaseConfig.js"
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import LoginScreen from './screens/LoginScreen'
+import HomeScreen from './screens/HomeScreen';
+
+
 
 export default function App() {
+  const Stack = createNativeStackNavigator();
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Home" component={HomeScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
+
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: "center",
+    margin: 10,
   },
-});
+  inputContainer: {
+    backgroundColor: "white",
+    padding: 10,
+    marginVertical: 10,
+  },
+  input: {},
+  button: {
+    backgroundColor: "#256CFF",
+    padding: 15,
+    alignItems: "center",
+    marginVertical: 10,
+  },
+});  
