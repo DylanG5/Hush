@@ -1,11 +1,12 @@
 import { Text, View, StyleSheet } from "react-native"
+import { auth } from "../firebaseConfig"
 
 const ChatMessage = (props) => {
 
     //const { text, uid, photoURL } = props.message;
-    const text = props.msg
-    const messageClass = 'sent'
-    //const messageClass = uid === auth.currentUser.uid ? 'sent' : 'received';
+    const text = props.msg.text
+    const uid = props.msg.userID
+    const messageClass = uid === auth.currentUser.uid ? 'sent' : 'received';
     return (<>
         <View style={styles.root}>
             <Text style={[styles.text, messageClass == 'sent' ? styles.sent : styles.received]}>{text}</Text>
@@ -28,8 +29,9 @@ const styles = StyleSheet.create({
         alignSelf: "flex-end",
     },
     received: {
-        backgroundColor: "grayx",
-        color: "black"
+        backgroundColor: "gray",
+        color: "white",
+        alignSelf: "flex-start"
     },
     text: {
         maxWidth: 500,

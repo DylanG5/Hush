@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { auth, db } from "../firebaseConfig";
 
-const HomeScreen = ({ navigation }) => {
+const ChatList = ({ navigation }) => {
     const [chats, setChats] = useState([]);
     const { uid } = auth.currentUser
     useEffect(() => {
@@ -28,9 +28,8 @@ const HomeScreen = ({ navigation }) => {
         fetchChats();
     }, []);
 
-
     const handleChatPress = (chatId) => {
-        navigation.navigate("ChatLogScreen", { chatId });
+        navigation.navigate("ChatLog", { chatId });
     };
 
     return (
@@ -38,8 +37,8 @@ const HomeScreen = ({ navigation }) => {
             <FlatList
                 data={chats}
                 renderItem={({ item }) => (
-                    <TouchableOpacity style={styles.button} onPress={() => handleChatPress(item.id)}>
-                        <Text style={styles.buttonText}>{item.title}</Text>
+                    <TouchableOpacity onPress={() => handleChatPress(item.id)}>
+                        <Text style={styles.chatItem}>{item.title}</Text>
                     </TouchableOpacity>
                 )}
                 keyExtractor={(item) => item.id}
@@ -49,22 +48,14 @@ const HomeScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-    button: {
-        backgroundColor: "#007bff",
-        borderRadius: 8,
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        marginBottom: 10,
-        alignItems: "center",
-    }, container: {
+    container: {
         flex: 1,
         padding: 20,
     },
-    buttonText: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "bold",
+    chatItem: {
+        fontSize: 18,
+        marginBottom: 10,
     },
 });
 
-export default HomeScreen;
+export default ChatList;
