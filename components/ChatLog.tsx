@@ -1,81 +1,88 @@
-import { Pressable, TextInput, View, Text, StyleSheet } from "react-native"
-import ChatMessage from "./ChatMessage"
-import { useEffect, useState } from "react"
-import { getAuth } from "firebase/auth";
-import app from "../firebaseConfig";
-import { db } from "../firebaseConfig";
-import { auth } from "../firebaseConfig";
-import { collection, getDocs, addDoc, serverTimestamp, onSnapshot, doc, orderBy, query } from "firebase/firestore";
+import React, { useState, useEffect } from 'react';
+import { View, TextInput, Pressable, Text, StyleSheet } from 'react-native';
+import ChatMessage from './ChatMessage';
+import { db, auth } from '../firebaseConfig';
+import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from 'firebase/firestore';
+import axios from 'axios';
 
 const ChatLog = ({ route }) => {
     const { chatId } = route.params;
-    console.log('chatID', chatId)
     const [messages, setMessages] = useState([]);
+    const [message, setMessage] = useState("");
+    const TEST_KEY_BASE64 = 'yz0hffXIolYcMk+bq62p4VTViodFn9sRGqVfzstn44g=';
+
     useEffect(() => {
-        const unsubscribe = onSnapshot(query(collection(db, "messages", chatId, "messages"), orderBy("timeSent")), (querySnapshot) => {
-            const messagesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setMessages(messagesData);
+        const messagesRef = collection(db, "messages", chatId, "messages");
+        const q = query(messagesRef, orderBy("timeSent"));
+
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const messagesData = querySnapshot.docs.map(async doc => {
+                const data = doc.data();
+                const decryptedText = await decryptMessage(data.text);
+                return { id: doc.id, ...data, text: decryptedText };
+            });
+
+            Promise.all(messagesData).then(setMessages);
         });
 
-        return () => unsubscribe(); // Cleanup function to unsubscribe from snapshot listener
-    }, []);
+        return () => unsubscribe();
+    }, [chatId]);
 
-
-
-    // Unsubscribe from the snapshot listener when component unmounts
-
-
-    console.log('messages:', messages)
-    //const messages = ['hey', 'hello', 'how are you']
-    const [message, setMessage] = useState("")
-
-
-    const sendMessage = async (e) => {
-        e.preventDefault();
-
-        const { uid } = auth.currentUser;
+    const encryptMessage = async (messageText) => {
         try {
-            await addDoc(collection(db, "messages", chatId, "messages"), {
-                text: message,
-                timeSent: serverTimestamp(),
-                userID: uid
-            })
-            setMessage("");
-        } catch (e) {
-
+            const response = await axios.post('http://192.168.2.63:5000/encrypt', { message: messageText, key: TEST_KEY_BASE64 });
+            return response.data.encrypted_message;
+        } catch (error) {
+            console.error('Error encrypting message:', error);
+            return '';
         }
+    };
 
+    const decryptMessage = async (encryptedMessage) => {
+        try {
+            const response = await axios.post('http://192.168.2.63:5000/decrypt', { encrypted_message: encryptedMessage, key: TEST_KEY_BASE64 });
+            return response.data.decrypted_message;
+        } catch (error) {
+            console.error('Error decrypting message:', error);
+            return encryptedMessage; // Optionally handle this differently
+        }
+    };
 
-    }
+    const sendMessage = async () => {
+        if (!message.trim()) return;
+        const encryptedMessage = await encryptMessage(message);
+        await addDoc(collection(db, "messages", chatId, "messages"), {
+            text: encryptedMessage,
+            timeSent: serverTimestamp(),
+            userID: auth.currentUser.uid
+        });
+        setMessage("");
+    };
 
     return (
-        <View>
-            {messages && messages.length > 0 ? messages.map(msg => <ChatMessage key={msg.id} msg={msg} />) : <Text>No messages</Text>}
-            <TextInput style={styles.inputContainer} value={message} onChangeText={setMessage} placeholder="type message here"></TextInput>
-            <Pressable style={styles.button} onPress={sendMessage}>
-                <Text>Send Message</Text>
-            </Pressable>
+        <View style={styles.container}>
+            {messages.length > 0 ? messages.map(msg => <ChatMessage key={msg.id} msg={msg} />) : <Text>No messages</Text>}
+            <TextInput style={styles.input} value={message} onChangeText={setMessage} placeholder="Type a message" />
+            <Pressable style={styles.button} onPress={sendMessage}><Text>Send</Text></Pressable>
         </View>
-    )
-}
+    );
+};
+
 const styles = StyleSheet.create({
-    root: {
+    container: {
         flex: 1,
-        justifyContent: "center",
         margin: 10,
     },
-    inputContainer: {
-        backgroundColor: "white",
+    input: {
+        backgroundColor: 'white',
         padding: 10,
-        marginVertical: 10,
+        marginBottom: 10,
     },
-    input: {},
     button: {
-        backgroundColor: "#CCCCFF",
+        backgroundColor: '#CCCCFF',
         padding: 15,
-        alignItems: "center",
-        marginVertical: 10,
+        alignItems: 'center',
     },
 });
 
-export default ChatLog
+export default ChatLog;
