@@ -2,18 +2,19 @@ import { Text, View, StyleSheet } from "react-native"
 import { auth } from "../firebaseConfig"
 
 const ChatMessage = (props) => {
-
-    //const { text, uid, photoURL } = props.message;
-    const text = props.msg.text
-    const uid = props.msg.userID
+    // You now receive the decrypted text directly.
+    const text = props.msg.text;
+    const uid = props.msg.userID;
     const messageClass = uid === auth.currentUser.uid ? 'sent' : 'received';
-    return (<>
-        <View style={styles.root}>
-            <Text style={[styles.text, messageClass == 'sent' ? styles.sent : styles.received]}>{text}</Text>
-        </View>
-    </>)
 
-}
+    return (
+        <View style={styles.root}>
+            <Text style={[styles.text, messageClass === 'sent' ? styles.sent : styles.received]}>
+                {text}
+            </Text>
+        </View>
+    );
+};
 
 const styles = StyleSheet.create({
     root: {
