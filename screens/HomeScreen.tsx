@@ -37,9 +37,20 @@ const HomeScreen = ({ navigation }) => {
         }, [])
     );
 
-    const handleChatPress = (chatId) => {
-        navigation.navigate("ChatLogScreen", { chatId });
+    const handleChatPress = async (chatId) => {
+        try {
+            const keyResponse = await fetch(`http://0.0.0.0:3000/get-chat-key/${chatId}/${uid}`);
+            const keyData = await keyResponse.json();
+            if (keyResponse.ok) {
+                navigation.navigate("ChatLogScreen", { chatId, key: keyData.key });
+            } else {
+                console.error('Failed to fetch key from KDC:', keyData);
+            }
+        } catch (error) {
+            console.error('Error fetching key for chat:', error);
+        }
     };
+    
 
     const handleCreateChat = async () => {
         
@@ -60,8 +71,11 @@ const HomeScreen = ({ navigation }) => {
                         title: enteredUserEmail, 
                     });
                     const newChatId = newChatRef.id;
+
+                    await registerWithKDC(newChatId, uid);
+                    await registerWithKDC(newChatId, enteredUserId);
                    
-                    navigation.navigate("ChatLogScreen", { chatId: newChatId });
+                    navigation.navigate("ChatLogScreen", { chatId: newChatId});
                 } else {
                     Alert.alert("User not found", "No user found with the provided email.");
                 }
@@ -90,6 +104,21 @@ const HomeScreen = ({ navigation }) => {
                 "plain-text"
             );
         });
+    };
+    const registerWithKDC = async (chatId, agentId) => {
+        try {
+            const response = await fetch('http://0.0.0.0:3000/register-agent', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ chatId, agentId }), // Register agent1
+            });
+            // Optionally, also register agent2 here or expect them to be registered when they open the chat
+            console.log("Registered with KDC:", await response.json());
+        } catch (error) {
+            console.error("Error registering chat with KDC:", error);
+        }
     };
 
     return (

@@ -56,5 +56,5 @@ app.get('/get-chat-key/:chatId/:agentId', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`KDC server listening at http://localhost:${port}`);
+  console.log(`KDC server listening at http://0.0.0.0:${port}`);
 });
