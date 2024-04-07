@@ -1,54 +1,72 @@
-import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import { View, TextInput, StyleSheet, Pressable, Text, SafeAreaView } from "react-native";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-
-const auth = getAuth();
+import React, { useState } from 'react';
+import { View, TextInput, StyleSheet, Pressable, Text, SafeAreaView, Alert } from "react-native";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 
 const LoginScreen = ({ navigation }) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const login = () => {
-    signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        // Signed in 
-        console.log('signed in!')
-        navigation.navigate('Home')
-        const user = userCredential.user;
-        // ...
-      })
-      .catch((error) => {
-        console.log('user doesnt exist')
-        const errorCode = error.code;
-        const errorMessage = error.message;
-      });
-  }
-  return (
-    <SafeAreaView style={styles.root}>
-      <View style={styles.inputContainer}>
-        <TextInput
-          value={email}
-          onChangeText={setEmail}
-          placeholder="Email"
-          style={styles.input}
-        />
-      </View>
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const auth = getAuth();
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Password"
-          style={styles.input}
-        />
-      </View>
+    const login = () => {
+      signInWithEmailAndPassword(auth, email, password)
+          .then((userCredential) => {
+              console.log('Signed in!');
+              navigation.navigate('Home');
+          })
+          .catch((error) => {
+              console.error('Login error', error.message);
+              if (error.code === 'auth/user-not-found') {
+                  // Prompt the user to create an account
+                  Alert.alert(
+                      "Account Not Found",
+                      "No account found with this email. Would you like to create an account?",
+                      [
+                          {
+                              text: "Yes",
+                              onPress: () => createAccount(),
+                          },
+                          {
+                              text: "No",
+                          },
+                      ]
+                  );
+              } else {
+                  // Handle other errors differently
+                  Alert.alert("Login Failed", error.message);
+              }
+          });
+  };
 
-      <Pressable onPress={login} style={styles.button}>
-        <Text>Log in</Text>
-      </Pressable>
-    </SafeAreaView>
-  );
-}
+    const createAccount = () => {
+        createUserWithEmailAndPassword(auth, email, password)
+            .then((userCredential) => {
+                console.log('Account created!');
+                navigation.navigate('Home');
+            })
+            .catch((error) => {
+                console.error('Failed to create account', error.message);
+                Alert.alert("Account Creation Failed", error.message);
+            });
+    };
+
+    return (
+        <SafeAreaView style={styles.root}>
+            <View style={styles.inputContainer}>
+                <TextInput value={email} onChangeText={setEmail} placeholder="Email" style={styles.input} />
+            </View>
+            <View style={styles.inputContainer}>
+                <TextInput value={password} onChangeText={setPassword} placeholder="Password" style={styles.input} secureTextEntry />
+            </View>
+            <Pressable onPress={login} style={styles.button}>
+                <Text>Log in</Text>
+            </Pressable>
+            <Pressable onPress={createAccount} style={styles.button}>
+                <Text>Create Account</Text>
+            </Pressable>
+        </SafeAreaView>
+    );
+};
+
 
 
 
