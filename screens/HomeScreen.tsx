@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from "react-native";
-import { collection, addDoc, getDocs } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, getDoc, doc } from "firebase/firestore";
 import { useFocusEffect } from "@react-navigation/native"; // Import useFocusEffect
 import { auth, db } from "../firebaseConfig";
 
 const HomeScreen = ({ navigation }) => {
     const [chats, setChats] = useState([]);
-    const [inputUserId, setInputUserId] = useState("");
+    const [inputUserEmail, setInputUserEmail] = useState("");
 
     const { uid } = auth.currentUser;
 
@@ -43,28 +43,39 @@ const HomeScreen = ({ navigation }) => {
 
     const handleCreateChat = async () => {
         
-        const enteredUserId = await promptUserId();
-        if (enteredUserId) {
+        const enteredUserEmail = await promptUserEmail();
+        if (enteredUserEmail) {
             try {
-                // Create a new chat with current user and entered user as members
-                const newChatRef = await addDoc(collection(db, "chats"), {
-                    members: [uid, enteredUserId],
-                    title: "New Chat", 
-                });
-                const newChatId = newChatRef.id;
-                // Navigate to the newly created chat
-                navigation.navigate("ChatLogScreen", { chatId: newChatId });
+               
+                const userQuery = query(collection(db, "users"), where("information", "array-contains", enteredUserEmail));
+                const userSnapshot = await getDocs(userQuery);
+                if (!userSnapshot.empty) {
+                    
+                    const userData = userSnapshot.docs[0].data();
+                    const enteredUserId = userData.information[1];
+                    const enteredUserEmail = userData.information[0]; 
+               
+                    const newChatRef = await addDoc(collection(db, "chats"), {
+                        members: [uid, enteredUserId],
+                        title: enteredUserEmail, 
+                    });
+                    const newChatId = newChatRef.id;
+                   
+                    navigation.navigate("ChatLogScreen", { chatId: newChatId });
+                } else {
+                    Alert.alert("User not found", "No user found with the provided email.");
+                }
             } catch (error) {
                 console.error("Error creating chat:", error);
             }
         }
     };
-
-    const promptUserId = () => {
+    
+    const promptUserEmail = () => {
         return new Promise((resolve) => {
             Alert.prompt(
-                "Enter User ID",
-                "Please enter the user ID of the person you want to chat with:",
+                "Enter User Email",
+                "Please enter the email of the person you want to chat with:",
                 [
                     {
                         text: "Cancel",
@@ -73,7 +84,7 @@ const HomeScreen = ({ navigation }) => {
                     },
                     {
                         text: "OK",
-                        onPress: (userId) => resolve(userId),
+                        onPress: (userEmail) => resolve(userEmail),
                     },
                 ],
                 "plain-text"
