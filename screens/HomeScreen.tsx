@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Modal, TouchableHighlight } from "react-native";
 import { collection, addDoc, getDocs, query, where, getDoc, doc } from "firebase/firestore";
-import { useFocusEffect } from "@react-navigation/native"; // Import useFocusEffect
+import { useFocusEffect } from "@react-navigation/native"; 
 import { auth, db } from "../firebaseConfig";
 
 const HomeScreen = ({ navigation }) => {
     const [chats, setChats] = useState([]);
     const [inputUserEmail, setInputUserEmail] = useState("");
+    const [modalVisible, setModalVisible] = useState(false);
 
     const { uid } = auth.currentUser;
 
@@ -50,22 +51,20 @@ const HomeScreen = ({ navigation }) => {
             console.error('Error fetching key for chat:', error);
         }
     };
-    
 
     const handleCreateChat = async () => {
-        
-        const enteredUserEmail = await promptUserEmail();
-        if (enteredUserEmail) {
+        setModalVisible(true);
+    };
+
+    const createUserChat = async () => {
+        if (inputUserEmail.trim() !== "") {
             try {
-               
-                const userQuery = query(collection(db, "users"), where("information", "array-contains", enteredUserEmail));
+                const userQuery = query(collection(db, "users"), where("information", "array-contains", inputUserEmail));
                 const userSnapshot = await getDocs(userQuery);
                 if (!userSnapshot.empty) {
-                    
                     const userData = userSnapshot.docs[0].data();
                     const enteredUserId = userData.information[1];
                     const enteredUserEmail = userData.information[0]; 
-               
                     const newChatRef = await addDoc(collection(db, "chats"), {
                         members: [uid, enteredUserId],
                         title: enteredUserEmail, 
@@ -74,10 +73,10 @@ const HomeScreen = ({ navigation }) => {
 
                     await registerWithKDC(newChatId, uid);
                     await registerWithKDC(newChatId, enteredUserId);
-                   
+                    setModalVisible(false);
                     navigation.navigate("ChatLogScreen", { chatId: newChatId});
                 } else {
-                    Alert.alert("User not found", "No user found with the provided email.");
+                    alert("User not found");
                 }
             } catch (error) {
                 console.error("Error creating chat:", error);
@@ -85,26 +84,6 @@ const HomeScreen = ({ navigation }) => {
         }
     };
     
-    const promptUserEmail = () => {
-        return new Promise((resolve) => {
-            Alert.prompt(
-                "Enter User Email",
-                "Please enter the email of the person you want to chat with:",
-                [
-                    {
-                        text: "Cancel",
-                        onPress: () => resolve(null),
-                        style: "cancel",
-                    },
-                    {
-                        text: "OK",
-                        onPress: (userEmail) => resolve(userEmail),
-                    },
-                ],
-                "plain-text"
-            );
-        });
-    };
     const registerWithKDC = async (chatId, agentId) => {
         try {
             const response = await fetch('http://0.0.0.0:3000/register-agent', {
@@ -112,9 +91,9 @@ const HomeScreen = ({ navigation }) => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ chatId, agentId }), // Register agent1
+                body: JSON.stringify({ chatId, agentId }),
             });
-            // Optionally, also register agent2 here or expect them to be registered when they open the chat
+            
             console.log("Registered with KDC:", await response.json());
         } catch (error) {
             console.error("Error registering chat with KDC:", error);
@@ -135,6 +114,32 @@ const HomeScreen = ({ navigation }) => {
             <TouchableOpacity style={styles.createChatButton} onPress={handleCreateChat}>
                 <Text style={styles.createChatButtonText}>Create Chat</Text>
             </TouchableOpacity>
+
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => {
+                    setModalVisible(!modalVisible);
+                }}
+            >
+                <View style={styles.centeredView}>
+                    <View style={styles.modalView}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter User Email"
+                            onChangeText={(text) => setInputUserEmail(text)}
+                            value={inputUserEmail}
+                        />
+                        <TouchableHighlight
+                            style={{ ...styles.openButton, backgroundColor: "#2196F3" }}
+                            onPress={createUserChat}
+                        >
+                            <Text style={styles.textStyle}>Create Chat</Text>
+                        </TouchableHighlight>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -173,7 +178,47 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "bold",
     },
+    centeredView: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 22
+    },
+    modalView: {
+        margin: 20,
+        backgroundColor: "white",
+        borderRadius: 20,
+        padding: 35,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5
+    },
+    openButton: {
+        backgroundColor: "#F194FF",
+        borderRadius: 20,
+        padding: 10,
+        elevation: 2
+    },
+    textStyle: {
+        color: "white",
+        fontWeight: "bold",
+        textAlign: "center"
+    },
+    input: {
+        height: 40,
+        margin: 12,
+        borderWidth: 1,
+        padding: 10,
+        width: '100%',
+    }
 });
 
 export default HomeScreen;
+
 
