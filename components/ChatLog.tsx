@@ -11,13 +11,11 @@ const ChatLog = ({ route }) => {
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState("");
     const [key, setKey] = useState('');
-    //const key = 'yz0hffXIolYcMk+bq62p4VTViodFn9sRGqVfzstn44g=';
+    const keytest = 'yz0hffXIolYcMk+bq62p4VTViodFn9sRGqVfzstn44g=';
 
     useEffect(() => {
         const fetchKey = async () => {
             try {
-                console.log(chatId);
-                console.log(uid);
                 const keyResponse = await fetch(`http://192.168.0.9:4000/get-chat-key/${chatId}/${uid}`);
                 const keyData = await keyResponse.json();
                 if (keyResponse.ok) {
@@ -27,7 +25,6 @@ const ChatLog = ({ route }) => {
                     console.error('Failed to fetch key from KDC:', keyData);
                 }
             } catch (error) {
-                console.log('testtttt');
                 console.error('Error fetching key for chat:', error);
             }
         };
@@ -51,9 +48,8 @@ const ChatLog = ({ route }) => {
     }, [chatId]);
 
     const encryptMessage = async (messageText) => {
-        if (!key) return '';
         try {
-            const response = await axios.post('http://192.168.0.9:5000/encrypt', { message: messageText, key: key });
+            const response = await axios.post('http://192.168.0.9:5000/encrypt', { message: messageText, key: keytest });
             return response.data.encrypted_message;
         } catch (error) {
             console.error('Error encrypting message:', error);
@@ -62,9 +58,8 @@ const ChatLog = ({ route }) => {
     };
 
     const decryptMessage = async (encryptedMessage) => {
-        if (!key) return encryptedMessage;
         try {
-            const response = await axios.post('http://192.168.0.9:5000/decrypt', { encrypted_message: encryptedMessage, key: key });
+            const response = await axios.post('http://192.168.0.9:5000/decrypt', { encrypted_message: encryptedMessage, key: keytest });
             return response.data.decrypted_message;
         } catch (error) {
             console.error('Error decrypting message:', error);

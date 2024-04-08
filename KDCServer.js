@@ -11,6 +11,8 @@ const chatSessions = [];
 
 function generateKey() {
   const key = crypto.randomBytes(32);
+  console.log('key:');
+  console.log(key);
   return key.toString('base64');
 }
 
