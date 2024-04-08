@@ -28,8 +28,8 @@ const ChatList = ({ navigation }) => {
         fetchChats();
     }, []);
 
-    const handleChatPress = (chatId) => {
-        navigation.navigate("ChatLog", { chatId });
+    const handleChatPress = (chatId, uid) => {
+        navigation.navigate("ChatLog", { chatId, uid });
     };
 
     return (
@@ -37,7 +37,7 @@ const ChatList = ({ navigation }) => {
             <FlatList
                 data={chats}
                 renderItem={({ item }) => (
-                    <TouchableOpacity onPress={() => handleChatPress(item.id)}>
+                    <TouchableOpacity onPress={() => handleChatPress(item.id, uid)}>
                         <Text style={styles.chatItem}>{item.title}</Text>
                     </TouchableOpacity>
                 )}
