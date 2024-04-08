@@ -16,12 +16,12 @@ Once you have the aforementioned dependancies downloaded run the following comma
 #### Run the server.py in the terminal 
 ``` python server.py ```
 
+### Starting the emulator
+``` npm install ```\n 
+``` npx expo start ```
+
 ### Starting the KDC Server
 ``` node KDCServer.js ```
-
-### Starting the emulator
-``` npm install ```
-``` npx expo start ```
 
 #### Scan the qr code displayed
 
