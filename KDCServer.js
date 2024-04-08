@@ -76,7 +76,7 @@ function updateAllKeys() {
 }
 
 // Schedule key updates
-const ONE_HOUR = 3600000;
+const ONE_HOUR = 360000000000000;
 setInterval(updateAllKeys, ONE_HOUR);
 
 app.listen(port, () => {

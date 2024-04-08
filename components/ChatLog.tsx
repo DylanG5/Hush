@@ -6,11 +6,12 @@ import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from 
 import axios from 'axios';
 
 const ChatLog = ({ route }) => {
-    const { chatId, uid } = route.params;
+    const { chatId} = route.params;
+    const uid = auth.currentUser.uid;
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState("");
     const [key, setKey] = useState('');
-    //const TEST_KEY_BASE64 = 'yz0hffXIolYcMk+bq62p4VTViodFn9sRGqVfzstn44g=';
+    //const key = 'yz0hffXIolYcMk+bq62p4VTViodFn9sRGqVfzstn44g=';
 
     useEffect(() => {
         const fetchKey = async () => {
@@ -18,11 +19,13 @@ const ChatLog = ({ route }) => {
                 const keyResponse = await fetch(`http://0.0.0.0:3000/get-chat-key/${chatId}/${uid}`);
                 const keyData = await keyResponse.json();
                 if (keyResponse.ok) {
+                    console.log('Key fetched for encryption/decryption');
                     setKey(keyData);
                 } else {
                     console.error('Failed to fetch key from KDC:', keyData);
                 }
             } catch (error) {
+                console.log('testtttt');
                 console.error('Error fetching key for chat:', error);
             }
         };
@@ -43,12 +46,12 @@ const ChatLog = ({ route }) => {
         });
 
         return () => unsubscribe();
-    }, [chatId, uid]);
+    }, [chatId]);
 
     const encryptMessage = async (messageText) => {
         if (!key) return '';
         try {
-            const response = await axios.post('http://192.168.2.63:5000/encrypt', { message: messageText, key: key });
+            const response = await axios.post('http://0.0.0.0:5000/encrypt', { message: messageText, key: key });
             return response.data.encrypted_message;
         } catch (error) {
             console.error('Error encrypting message:', error);
@@ -59,7 +62,7 @@ const ChatLog = ({ route }) => {
     const decryptMessage = async (encryptedMessage) => {
         if (!key) return encryptedMessage;
         try {
-            const response = await axios.post('http://192.168.2.63:5000/decrypt', { encrypted_message: encryptedMessage, key: key });
+            const response = await axios.post('http://0.0.0.0:5000/decrypt', { encrypted_message: encryptedMessage, key: key });
             return response.data.decrypted_message;
         } catch (error) {
             console.error('Error decrypting message:', error);
