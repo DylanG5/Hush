@@ -12,16 +12,16 @@ https://packaging.python.org/en/latest/tutorials/installing-packages/
 Once you have the aforementioned dependancies downloaded run the following commands: 
 
 ### Starting the encryption and decryption server
-cd ./Hush/FlaskApp
+``` cd ./Hush/FlaskApp ```
 #### Run the server.py in the terminal 
-python server.py
+``` python server.py ```
 
 ### Starting the KDC Server
-node KDCServer.js
+``` node KDCServer.js ```
 
 ### Starting the emulator
-npm install
-npx expo start
+``` npm install ```
+``` npx expo start ```
 
 #### Scan the qr code displayed
 
