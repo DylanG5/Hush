@@ -1,45 +1,26 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { getAuth } from "firebase/auth";
+import { getMessaging } from "firebase/messaging";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
+  apiKey: "AIzaSyClNfZQy118K5vXxwKvBkOchLHaLlt2X30",
+  authDomain: "hush-48602.firebaseapp.com",
+  projectId: "hush-48602",
+  storageBucket: "hush-48602.appspot.com",
+  messagingSenderId: "299017687433",
+  appId: "1:299017687433:web:e86490f15ff80e7cd2d158",
+  measurementId: "G-DPSC87LPKB"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+export const auth = getAuth(app);
 
-// Function to register a new user with email and password
-const registerUser = async (email, password) => {
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    console.log("User registered:", user.uid);
-    return user;
-  } catch (error) {
-    console.error("Error registering user:", error.message);
-    throw error;
-  }
-};
 
-// Function to sign in an existing user with email and password
-const signInUser = async (email, password) => {
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    console.log("User signed in:", user.uid);
-    return user;
-  } catch (error) {
-    console.error("Error signing in user:", error.message);
-    throw error;
-  }
-};
 
-export { app, auth, registerUser, signInUser };
+export default app
