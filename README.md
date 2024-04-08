@@ -17,7 +17,8 @@ Once you have the aforementioned dependancies downloaded run the following comma
 ``` python server.py ```
 
 ### Starting the emulator
-``` npm install ```__
+``` npm install ```
+
 ``` npx expo start ```
 
 ### Starting the KDC Server
