@@ -16,7 +16,9 @@ const ChatLog = ({ route }) => {
     useEffect(() => {
         const fetchKey = async () => {
             try {
-                const keyResponse = await fetch(`http://0.0.0.0:3000/get-chat-key/${chatId}/${uid}`);
+                console.log(chatId);
+                console.log(uid);
+                const keyResponse = await fetch(`http://192.168.0.9:4000/get-chat-key/${chatId}/${uid}`);
                 const keyData = await keyResponse.json();
                 if (keyResponse.ok) {
                     console.log('Key fetched for encryption/decryption');
@@ -51,7 +53,7 @@ const ChatLog = ({ route }) => {
     const encryptMessage = async (messageText) => {
         if (!key) return '';
         try {
-            const response = await axios.post('http://0.0.0.0:5000/encrypt', { message: messageText, key: key });
+            const response = await axios.post('http://192.168.0.9:5000/encrypt', { message: messageText, key: key });
             return response.data.encrypted_message;
         } catch (error) {
             console.error('Error encrypting message:', error);
@@ -62,7 +64,7 @@ const ChatLog = ({ route }) => {
     const decryptMessage = async (encryptedMessage) => {
         if (!key) return encryptedMessage;
         try {
-            const response = await axios.post('http://0.0.0.0:5000/decrypt', { encrypted_message: encryptedMessage, key: key });
+            const response = await axios.post('http://192.168.0.9:5000/decrypt', { encrypted_message: encryptedMessage, key: key });
             return response.data.decrypted_message;
         } catch (error) {
             console.error('Error decrypting message:', error);

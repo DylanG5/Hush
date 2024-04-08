@@ -40,14 +40,16 @@ const HomeScreen = ({ navigation }) => {
 
     const handleChatPress = async (chatId) => {
         try {
-            const keyResponse = await fetch(`http://0.0.0.0:3000/get-chat-key/${chatId}/${uid}`);
+            const keyResponse = await fetch(`http://192.168.0.9:4000/get-chat-key/${chatId}/${uid}`);
             const keyData = await keyResponse.json();
+            
             if (keyResponse.ok) {
                 navigation.navigate("ChatLogScreen", { chatId, key: keyData.key });
             } else {
                 console.error('Failed to fetch key from KDC:', keyData);
             }
         } catch (error) {
+            console.log('testtt');
             console.error('Error fetching key for chat:', error);
         }
     };
@@ -86,7 +88,7 @@ const HomeScreen = ({ navigation }) => {
     
     const registerWithKDC = async (chatId, agentId) => {
         try {
-            const response = await fetch('http://0.0.0.0:3000/register-agent', {
+            const response = await fetch('http://192.168.0.9:4000/register-agent', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

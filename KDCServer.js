@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const crypto = require('crypto');
 
 const app = express();
-const port = 3000;
+const port = 4000;
 
 app.use(bodyParser.json());
 
@@ -77,8 +77,8 @@ function updateAllKeys() {
 
 // Schedule key updates
 const ONE_HOUR = 360000000000000;
-setInterval(updateAllKeys, ONE_HOUR);
+//setInterval(updateAllKeys, ONE_HOUR);
 
 app.listen(port, () => {
-  console.log(`KDC server listening at http://0.0.0.0:${port}`);
+  console.log(`KDC server listening at http://192.168.0.9:${port}`);
 });
