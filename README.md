@@ -1,4 +1,4 @@
-### How to Run Hush 
+# How to Run Hush 
 
 ## Download Dependancies 
 
