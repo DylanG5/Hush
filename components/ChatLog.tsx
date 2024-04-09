@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, Pressable, Text, StyleSheet } from 'react-native';
+import { View, TextInput, Pressable, Text, StyleSheet, Alert } from 'react-native';
 import ChatMessage from './ChatMessage';
 import { db, auth } from '../firebaseConfig';
-import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot,  getDoc, doc} from 'firebase/firestore';
 import axios from 'axios';
 
 const ChatLog = ({ route }) => {
-    const { chatId} = route.params;
+    const { chatId, TGT} = route.params;
+    console.log("chatID",chatId,"TGT",TGT);
     const uid = auth.currentUser.uid;
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState("");
     const [key, setKey] = useState('');
     const keytest = 'yz0hffXIolYcMk+bq62p4VTViodFn9sRGqVfzstn44g=';
-
+    const [databaseTGT, setTGT] = useState('');
     useEffect(() => {
         const fetchKey = async () => {
             try {
@@ -28,9 +29,26 @@ const ChatLog = ({ route }) => {
                 console.error('Error fetching key for chat:', error);
             }
         };
-
+        const fetchDatabaseTGT = async () => {
+                    try {
+                        const docRef = doc(db, 'tickets', TGT);
+                        const docSnap = await getDoc(docRef);
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            if (data && data.tgt) { // Check if data and data.tgt are not undefined
+                                setTGT(data.tgt);
+                            } else {
+                                console.error('TGT document does not contain tgt field');
+                            }
+                        } else {
+                            console.error('TGT document does not exist');
+                        }
+                    } catch (error) {
+                        console.error('Error fetching TGT from database:', error);
+                    }
+                };
         fetchKey();
-
+        fetchDatabaseTGT();
         const messagesRef = collection(db, "messages", chatId, "messages");
         const q = query(messagesRef, orderBy("timeSent"));
 
@@ -45,7 +63,7 @@ const ChatLog = ({ route }) => {
         });
 
         return () => unsubscribe();
-    }, [chatId]);
+    }, [chatId, TGT]);
 
     const encryptMessage = async (messageText) => {
         try {
@@ -69,6 +87,11 @@ const ChatLog = ({ route }) => {
 
     const sendMessage = async () => {
         if (!message.trim()) return;
+        if (TGT !== databaseTGT) {
+                    Alert.alert('Error', 'Invalid TGT. Please log in again.');
+                    return;
+                }
+                console.log("TGT confirmed")
         const encryptedMessage = await encryptMessage(message);
         await addDoc(collection(db, "messages", chatId, "messages"), {
             text: encryptedMessage,

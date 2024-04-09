@@ -28,8 +28,8 @@ const ChatList = ({ navigation }) => {
         fetchChats();
     }, []);
 
-    const handleChatPress = (chatId, uid) => {
-        navigation.navigate("ChatLog", { chatId, uid });
+    const handleChatPress = (chatId, TGT) => {
+        navigation.navigate("ChatLog", { chatId, TGT });
     };
 
     return (

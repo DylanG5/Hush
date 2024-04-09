@@ -12,9 +12,9 @@ const HomeScreen = ({ navigation }) => {
     const [inputMember2Email, setInputMember2Email] = useState("");
     const [modalVisible, setModalVisible] = useState(false);
     const [isCreatingGroup, setIsCreatingGroup] = useState(false);
-
+    
     const { uid } = auth.currentUser;
-
+    const [tgt, setTGT] = useState("");
     const fetchChats = async () => {
         const chatRooms = [];
         try {
@@ -35,6 +35,19 @@ const HomeScreen = ({ navigation }) => {
     useEffect(() => {
         fetchChats();
     }, []); 
+    useEffect(() => {
+            const generateTGT = async () => {
+                const randomString = Math.random().toString(36).substring(7); // Generate random string
+                const tgt = uid + "_" + randomString;
+                setTGT(tgt);
+                const ticketDocRef = await addDoc(collection(db, 'Tickets'), {
+                    tgt,
+                    userId: uid,
+                });
+                console.log("TGT stored in Firestore with ID:", ticketDocRef.id);
+            };
+            generateTGT();
+        }, [uid]);
 
     useFocusEffect(
         React.useCallback(() => {
@@ -48,7 +61,7 @@ const HomeScreen = ({ navigation }) => {
             const keyData = await keyResponse.json();
             
             if (keyResponse.ok) {
-                navigation.navigate("ChatLogScreen", { chatId, key: keyData.key });
+                navigation.navigate("ChatLogScreen", { chatId, key: keyData.key,TGT: tgt});
             } else {
                 console.error('Failed to fetch key from KDC:', keyData);
             }
