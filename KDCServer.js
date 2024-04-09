@@ -11,10 +11,26 @@ const chatSessions = [];
 
 function generateKey() {
   const key = crypto.randomBytes(32);
-  console.log('key:');
-  console.log(key);
   return key.toString('base64');
 }
+function updateAllKeys() {
+  console.log("Updating keys for all sessions...");
+  
+  const newKeysForChatIds = {};
+
+  chatSessions.forEach(session => {
+      if (!newKeysForChatIds[session.chatId]) {
+          newKeysForChatIds[session.chatId] = generateKey();
+      }
+      
+      session.key = newKeysForChatIds[session.chatId];
+  });
+  
+  console.log("Keys updated.");
+}
+
+const refresh_interval = 3600000; // in milliseconds
+setInterval(updateAllKeys, refresh_interval);
 
 function findSessionsByChatId(chatId) {
   return chatSessions.filter(session => session.chatId === chatId);
@@ -58,28 +74,7 @@ app.get('/get-chat-key/:chatId/:agentId', (req, res) => {
   res.json(session);
 });
 
-function updateAllKeys() {
-  console.log("Updating keys for all chat sessions...");
 
-  // Find all unique chatIds
-  const uniqueChatIds = [...new Set(chatSessions.map(session => session.chatId))];
-  
-  // Generate a new key for each unique chatId and update sessions
-  uniqueChatIds.forEach(chatId => {
-      const newKey = generateKey(); // Generate new key for this chatId
-      chatSessions.forEach(session => {
-          if (session.chatId === chatId) {
-              session.key = newKey; // Update key for all sessions with this chatId
-          }
-      });
-  });
-
-  console.log("All keys updated.");
-}
-
-// Schedule key updates
-const ONE_HOUR = 360000000000000;
-//setInterval(updateAllKeys, ONE_HOUR);
 
 app.listen(port, () => {
   console.log(`KDC server listening at http://192.168.0.9:${port}`);
