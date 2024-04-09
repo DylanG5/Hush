@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, Pressable, Text, StyleSheet } from 'react-native';
+import { View, TextInput, Pressable, Text, StyleSheet, Alert } from 'react-native';
 import ChatMessage from './ChatMessage';
 import { db, auth } from '../firebaseConfig';
-import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot,  getDoc, doc} from 'firebase/firestore';
 import axios from 'axios';
 
 const ChatLog = ({ route }) => {
-    const { chatId, uid } = route.params;
+    const { chatId, uid, TGT } = route.params;
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState("");
     const [key, setKey] = useState('');
     //const TEST_KEY_BASE64 = 'yz0hffXIolYcMk+bq62p4VTViodFn9sRGqVfzstn44g=';
-
+    const [databaseTGT, setTGT] = useState('');
     useEffect(() => {
         const fetchKey = async () => {
             try {
-                const keyResponse = await fetch(`http://0.0.0.0:3000/get-chat-key/${chatId}/${uid}`);
+                const keyResponse = await fetch(`http://192.168.0.9:4000/get-chat-key/${chatId}/${uid}`);
                 const keyData = await keyResponse.json();
                 if (keyResponse.ok) {
                     setKey(keyData);
@@ -26,9 +26,26 @@ const ChatLog = ({ route }) => {
                 console.error('Error fetching key for chat:', error);
             }
         };
-
+        const fetchDatabaseTGT = async () => {
+            try {
+                const docRef = doc(db, 'tickets', TGT); // Assuming TGT is the document ID in the 'tickets' collection
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data && data.tgt) { // Check if data and data.tgt are not undefined
+                        setTGT(data.tgt);
+                    } else {
+                        console.error('TGT document does not contain tgt field');
+                    }
+                } else {
+                    console.error('TGT document does not exist');
+                }
+            } catch (error) {
+                console.error('Error fetching TGT from database:', error);
+            }
+        };
         fetchKey();
-
+        fetchDatabaseTGT();
         const messagesRef = collection(db, "messages", chatId, "messages");
         const q = query(messagesRef, orderBy("timeSent"));
 
@@ -43,12 +60,12 @@ const ChatLog = ({ route }) => {
         });
 
         return () => unsubscribe();
-    }, [chatId, uid]);
+    }, [chatId, uid, TGT]);
 
     const encryptMessage = async (messageText) => {
         if (!key) return '';
         try {
-            const response = await axios.post('http://192.168.2.63:5000/encrypt', { message: messageText, key: key });
+            const response = await axios.post('http://192.168.0.9:5000/encrypt', { message: messageText, key: key });
             return response.data.encrypted_message;
         } catch (error) {
             console.error('Error encrypting message:', error);
@@ -59,7 +76,7 @@ const ChatLog = ({ route }) => {
     const decryptMessage = async (encryptedMessage) => {
         if (!key) return encryptedMessage;
         try {
-            const response = await axios.post('http://192.168.2.63:5000/decrypt', { encrypted_message: encryptedMessage, key: key });
+            const response = await axios.post('http://192.168.0.9:5000/decrypt', { encrypted_message: encryptedMessage, key: key });
             return response.data.decrypted_message;
         } catch (error) {
             console.error('Error decrypting message:', error);
@@ -69,6 +86,11 @@ const ChatLog = ({ route }) => {
 
     const sendMessage = async () => {
         if (!message.trim()) return;
+        if (TGT !== databaseTGT) {
+            Alert.alert('Error', 'Invalid TGT. Please log in again.');
+            return;
+        }
+        console.log("TGT confirmed")
         const encryptedMessage = await encryptMessage(message);
         await addDoc(collection(db, "messages", chatId, "messages"), {
             text: encryptedMessage,
