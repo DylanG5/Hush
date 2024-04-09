@@ -6,13 +6,12 @@ import { collection, addDoc, serverTimestamp, query, orderBy, onSnapshot,  getDo
 import axios from 'axios';
 
 const ChatLog = ({ route }) => {
-    const { chatId, TGT} = route.params;
-    console.log("chatID",chatId,"TGT",TGT);
-    const uid = auth.currentUser.uid;
+    const { chatId, uid, TGT } = route.params;
+    console.log("Received parameters: ", chatId, uid, TGT);
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState("");
     const [key, setKey] = useState('');
-    const keytest = 'yz0hffXIolYcMk+bq62p4VTViodFn9sRGqVfzstn44g=';
+    //const TEST_KEY_BASE64 = 'yz0hffXIolYcMk+bq62p4VTViodFn9sRGqVfzstn44g=';
     const [databaseTGT, setTGT] = useState('');
     useEffect(() => {
         const fetchKey = async () => {
@@ -20,7 +19,6 @@ const ChatLog = ({ route }) => {
                 const keyResponse = await fetch(`http://192.168.0.9:4000/get-chat-key/${chatId}/${uid}`);
                 const keyData = await keyResponse.json();
                 if (keyResponse.ok) {
-                    console.log('Key fetched for encryption/decryption');
                     setKey(keyData);
                 } else {
                     console.error('Failed to fetch key from KDC:', keyData);
@@ -30,23 +28,24 @@ const ChatLog = ({ route }) => {
             }
         };
         const fetchDatabaseTGT = async () => {
-                    try {
-                        const docRef = doc(db, 'tickets', TGT);
-                        const docSnap = await getDoc(docRef);
-                        if (docSnap.exists()) {
-                            const data = docSnap.data();
-                            if (data && data.tgt) { // Check if data and data.tgt are not undefined
-                                setTGT(data.tgt);
-                            } else {
-                                console.error('TGT document does not contain tgt field');
-                            }
-                        } else {
-                            console.error('TGT document does not exist');
-                        }
-                    } catch (error) {
-                        console.error('Error fetching TGT from database:', error);
+            try {
+                const docRef = doc(db, 'Tickets', TGT); 
+                console.log(docRef);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data && data.tgt) { // Check if data and data.tgt are not undefined
+                        setTGT(data.tgt);
+                    } else {
+                        console.error('TGT document does not contain tgt field');
                     }
-                };
+                } else {
+                    console.error('TGT document does not exist');
+                }
+            } catch (error) {
+                console.error('Error fetching TGT from database:', error);
+            }
+        };
         fetchKey();
         fetchDatabaseTGT();
         const messagesRef = collection(db, "messages", chatId, "messages");
@@ -63,11 +62,12 @@ const ChatLog = ({ route }) => {
         });
 
         return () => unsubscribe();
-    }, [chatId, TGT]);
+    }, [chatId, uid, TGT]);
 
     const encryptMessage = async (messageText) => {
+        if (!key) return '';
         try {
-            const response = await axios.post('http://192.168.0.9:5000/encrypt', { message: messageText, key: keytest });
+            const response = await axios.post('http://192.168.0.9:5000/encrypt', { message: messageText, key: key });
             return response.data.encrypted_message;
         } catch (error) {
             console.error('Error encrypting message:', error);
@@ -76,8 +76,9 @@ const ChatLog = ({ route }) => {
     };
 
     const decryptMessage = async (encryptedMessage) => {
+        if (!key) return encryptedMessage;
         try {
-            const response = await axios.post('http://192.168.0.9:5000/decrypt', { encrypted_message: encryptedMessage, key: keytest });
+            const response = await axios.post('http://192.168.0.9:5000/decrypt', { encrypted_message: encryptedMessage, key: key });
             return response.data.decrypted_message;
         } catch (error) {
             console.error('Error decrypting message:', error);
@@ -88,10 +89,10 @@ const ChatLog = ({ route }) => {
     const sendMessage = async () => {
         if (!message.trim()) return;
         if (TGT !== databaseTGT) {
-                    Alert.alert('Error', 'Invalid TGT. Please log in again.');
-                    return;
-                }
-                console.log("TGT confirmed")
+            Alert.alert('Error', 'Invalid TGT. Please log in again.');
+            return;
+        }
+        console.log("TGT confirmed")
         const encryptedMessage = await encryptMessage(message);
         await addDoc(collection(db, "messages", chatId, "messages"), {
             text: encryptedMessage,
